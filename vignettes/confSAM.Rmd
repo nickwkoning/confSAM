@@ -1,7 +1,7 @@
 ---
 title: "Using the *confSAM*  R package"
 author: "Jesse Hemerik and Jelle Goeman" 
-date: "18 January 2016"
+date: "12 February 2018"
 bibliography: referenties.bib
 output:
   pdf_document:
@@ -29,7 +29,7 @@ vignette: >
 
 # Citing *confSAM*
 
-If you use the \Rpackage{confSAM} package, please cite the paper *J. Hemerik and J. J. Goeman, False discovery proportion estimation by permutations: confidence for SAM* (submitted).
+If you use the \Rpackage{confSAM} package, please cite @hemerik2018false.
 
 # Introduction
 
@@ -58,9 +58,9 @@ The methods vary in complexity and computational intensity. In the following it 
 
 ## Use of permutations
 
-The methods in this package can be used if the joint distribution of the part of the data corresponding to the true hypotheses, is invariant under a group of permutations. For example, suppose that each test statistic $T_i$, $1\leq i \leq m$, depends on some $n$-dimensional vector of obervations. Suppose for example that such a vector contains $n$ gene expression level measurements: $n/2$ from cases and $n/2$ from controls. If the joint distribution of the gene expression levels corresponding to the true hypotheses is the same for cases and controls, then permuting the cases and controls does not change the joint distribution of the part of the data under the null. In that case the methods in this package can be used. For the precise formulation of this assumption, see Hemerik and Goeman 2017, Assumption 1 (submitted).
+The methods in this package can be used if the joint distribution of the part of the data corresponding to the true hypotheses, is invariant under a group of permutations. For example, suppose that each test statistic $T_i$, $1\leq i \leq m$, depends on some $n$-dimensional vector of obervations. Suppose for example that such a vector contains $n$ gene expression level measurements: $n/2$ from cases and $n/2$ from controls. If the joint distribution of the gene expression levels corresponding to the true hypotheses is the same for cases and controls, then permuting the cases and controls does not change the joint distribution of the part of the data under the null. In that case the methods in this package can be used. For the precise formulation of this assumption, see @hemerik2018false, Assumption 1.
 
-Designs with more than two groups or other transformations than permutations are also possible. See Hemerik and Goeman 2017 for general theory.
+Designs with more than two groups or other transformations than permutations are also possible. See @hemerik2018false for general theory.
 
 # Basic estimate and bound
 
@@ -84,7 +84,7 @@ Using *confSAM* we will test the hypotheses $H_1,...,H_{70}$ where $H_i$ is the 
 To be able to use \Rfunction{confSAM}, we now construct the required matrix of *p*-values. We will use random permutations, i.e. random reshufflings of the 144 vectors of gene expression levels. Hence we first set the seed.
 
 
-```{r,}
+```{r,warning=FALSE}
 library(survival)
 set.seed(21983)
 w<-100 # number of random permutations
@@ -124,7 +124,7 @@ The number of rejections is also automatically given by the function \Rfunction{
 ## Basic confidence bound
 
 We now turn to computing a basic confidence bound for the number of false positives (or equivalently, the FDP).
-By Hemerik and Goeman 2017 a basic $(1-\alpha)$-confidence bound for the number of false positives is the $(1-\alpha)$-quantile of the numbers of rejections for the permuted versions of the data.
+By @hemerik2018false a basic $(1-\alpha)$-confidence bound for the number of false positives is the $(1-\alpha)$-quantile of the numbers of rejections for the permuted versions of the data.
 This basic upper bound is obtained as follows (for $\alpha=0.1$):
 
 ```{r,}
@@ -161,7 +161,7 @@ The first argument is the number of rejections, which we already computed above.
 # Improved upper bounds
 
 ## Closed testing-based bound
-Beside the basic upper bound discussed above, also more sophisticated upper bounds are derived in Hemerik and Goeman 2017. The first one we will discuss is related to the theory of closed testing. This method is the most computationally demanding, and is often infeasible when there are many hypotheses, but for the present example the method is feasible. The full closed testing-based method provides an upper bound that is often smaller than the basic upper bound discussed above, while still providing $(1-\alpha)100\%$ confidence. Details on how the bound is defined are in Hemerik and Goeman 2017.
+Beside the basic upper bound discussed above, also more sophisticated upper bounds are derived in @hemerik2018false. The first one we will discuss is related to the theory of closed testing. This method is the most computationally demanding, and is often infeasible when there are many hypotheses, but for the present example the method is feasible. The full closed testing-based method provides an upper bound that is often smaller than the basic upper bound discussed above, while still providing $(1-\alpha)100\%$ confidence. Details on how the bound is defined are in @hemerik2018false.
 
 To use this method we change the \Rfunarg{method} argument into \Rfunarg{full}. 
 ```{r,}
@@ -171,7 +171,7 @@ Note that the resulting upper bound is smaller than the bound obtained with \Rfu
 In cases where the closed-testing method is infeasible, in some cases with many false hypotheses the basic bound can still be improved by setting \Rfunarg{method="csc"}. In that case an exact, but conservative shortcut for the full closed testing-based method is used. A method that is more likely to improve the basic bound however, is the approximation method discussed below.
 
 ## Approximation method
-Setting \Rfunarg{method="full"} can lead to computational infeasibility. In that case a possible solution is to approximate this bound. This is done by setting \Rfunarg{method="approx"}. This corresponds to the approximation method detailed in Hemerik and Goeman 2017.
+Setting \Rfunarg{method="full"} can lead to computational infeasibility. In that case a possible solution is to approximate this bound. This is done by setting \Rfunarg{method="approx"}. This corresponds to the approximation method detailed in @hemerik2018false.
 
 For example, in our example increasing the cut-off leads to more rejections, and it is a property of the method that it then tends to take longer or can be infeasible. To limit the computational burden, the approximation method can be used.
 We now increase the cut-off to $0.2$ and illustrate the approximation method. For comparison we also compute the simple bound explained above.
@@ -186,7 +186,7 @@ confSAM(p=pvalues[1,], PM=pvalues, cutoff=0.2, alpha=0.1, method="approx", ncomb
 
 The last result again means that with $90\%$ confidence, the number of false positives does not exceed the stated bound. Note that the bound obtained with the approximation method is smaller than the simple bound. 
 
-Note above that an additional argument \Rfunarg{ncombs} appears (default is 1000). This is the number of combinations that the approximation method checks per step. Details are in Hemerik and Goeman 2017. The higher \Rfunarg{ncombs} is, the more reliable the bound is as a $(1-\alpha)$-confidence bound, but the longer the computation takes. 
+Note above that an additional argument \Rfunarg{ncombs} appears (default is 1000). This is the number of combinations that the approximation method checks per step. Details are in @hemerik2018false. The higher \Rfunarg{ncombs} is, the more reliable the bound is as a $(1-\alpha)$-confidence bound, but the longer the computation takes. 
 We recommend taking \Rfunarg{ncombs} very high ($>10^4$) if time allows it.
 
 

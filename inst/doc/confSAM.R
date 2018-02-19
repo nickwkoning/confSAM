@@ -2,7 +2,7 @@
 library(penalized)
 data(nki70)
 
-## ------------------------------------------------------------------------
+## ----warning=FALSE-------------------------------------------------------
 library(survival)
 set.seed(21983)
 w<-100 # number of random permutations

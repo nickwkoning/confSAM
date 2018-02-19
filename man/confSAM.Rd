@@ -29,14 +29,14 @@
 
 \examples{
 #This is a fast example. It is recommended to take w and ncombs larger in practice.
-set.seed(4153)
-m <- 200   #number of hypotheses
+set.seed(423)
+m <- 100   #number of hypotheses
 n <- 10    #the amount of subjects is 2n (n cases, n controls).
-w <- 100   #number of random permutations. Here we take w small for computational speed
+w <- 50   #number of random permutations. Here we take w small for computational speed
 
 X <- matrix(rnorm((2*n)*m), 2*n, m)
-X[1:n,1:100] <- X[1:n,1:100]+1.5 # the first 100 hypotheses are false
-                                 #(increased mean for the first n individuals).
+X[1:n,1:50] <- X[1:n,1:50]+1.5 # the first 50 hypotheses are false
+#(increased mean for the first n individuals).
 
 y <- c(numeric(n)+1,numeric(n)-1)
 Y <- t(replicate(w, sample(y, size=2*n, replace=FALSE)))
@@ -62,11 +62,10 @@ confSAM(p=pvalues[1,], PM=pvalues, cutoff=0.05, alpha=0.1, method="simple")[3]
 ## potentially smaller (1-alpha)-upper bound for #false positives:
 ## (taking 'ncombs' much larger recommended)
 confSAM(p=pvalues[1,], PM=pvalues, cutoff=0.05, alpha=0.1, method="approx",
-        ncombs=100)[3]
+        ncombs=50)[3]
 
 
 ## actual number of false positives:
-sum(pvalues[1,101:200]<0.05)
+sum(pvalues[1,51:100]<0.05)
 
 }
-
