@@ -189,7 +189,7 @@ confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small"
     zap <- foreach(
       l = 1:nrej[1],
       .combine= 'c'
-    ) %do% {
+    ) %dopar% {
       if (file.exists("checker.txt")) {
         return(NULL)
       } else {
