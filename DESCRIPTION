@@ -20,3 +20,4 @@ NeedsCompilation: no
 Packaged: 2018-02-19 10:17:52 UTC; Jesse
 Repository: CRAN
 Date/Publication: 2018-02-19 10:39:59 UTC
+RoxygenNote: 7.1.1
