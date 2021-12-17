@@ -116,51 +116,52 @@ confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small"
     boundfound <- FALSE
 
     zap <- foreach(
-      l = 1:nrej[1],
+      j = 1:ncores,
       .combine= 'c'
     ) %dopar% {
-      if (file.exists("checker.txt")) {
-        return(NULL)
-      } else {
-        nrcombs <- choose(nrej[1], l)
-        if(nrcombs > 1e6){ message("The full closed testing procedure
-        might be computationally infeasible.")}
-        combs <- combn(indR, l)
+      for (l in which(1:nrej[1] %% ncores == 0)) {
+        if (file.exists("checker.txt")) {
+          return(NULL)
+        } else {
+          nrcombs <- choose(nrej[1], l)
+          if(nrcombs > 1e6){ message("The full closed testing procedure
+          might be computationally infeasible.")}
+          combs <- combn(indR, l)
 
-        ###
+          ###
 
-        nrejs <- numeric(w)
-        boundfound <- TRUE
-        i<-1
-        while(boundfound==TRUE & i <= nrcombs){
-          if(reject== "small"){
-            nrejs <- apply( PM[,c(indRc, combs[,i])], 1, function(x) {sum(x<cutoff)} )
-          }
-          if(reject== "large"){
-            nrejs <- apply( PM[,c(indRc, combs[,i])], 1, function(x) {sum(x>cutoff)} )
-          }
-          if(reject== "absolute"){
-            nrejs <- apply( PM[,c(indRc, combs[,i])], 1, function(x) {sum(abs(x)>cutoff)} )
-          }
-
-
-
+          nrejs <- numeric(w)
+          boundfound <- TRUE
+          i<-1
+          while(boundfound==TRUE & i <= nrcombs){
+            if(reject== "small"){
+              nrejs <- apply( PM[,c(indRc, combs[,i])], 1, function(x) {sum(x<cutoff)} )
+            }
+            if(reject== "large"){
+              nrejs <- apply( PM[,c(indRc, combs[,i])], 1, function(x) {sum(x>cutoff)} )
+            }
+            if(reject== "absolute"){
+              nrejs <- apply( PM[,c(indRc, combs[,i])], 1, function(x) {sum(abs(x)>cutoff)} )
+            }
 
 
-          if(l <= sort(nrejs)[k]) {
-            boundfound <- FALSE   #the bound is not l
-            ctbound <- l
-            if (l == nrej[1]) {
+
+
+
+            if(l <= sort(nrejs)[k]) {
+              boundfound <- FALSE   #the bound is not l
+              ctbound <- l
+              if (l == nrej[1]) {
+                write(l, "checker.txt")
+              }
+            } else {
               write(l, "checker.txt")
             }
-          } else {
-            write(l, "checker.txt")
+            i <- i+1
           }
-          i <- i+1
+          return(l)
         }
-        return(l)
       }
-
     } #loop l
     ctbound = unlist(read.delim("checker.txt", header = FALSE))
     file.remove("checker.txt")
@@ -187,51 +188,53 @@ confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small"
     nrrandomcombs <- ncombs # number of random combinations checked
 
     zap <- foreach(
-      l = 1:nrej[1],
+      j = 1:ncores,
       .combine= 'c'
     ) %dopar% {
-      if (file.exists("checker.txt")) {
-        return(NULL)
-      } else {
-        #combs <- combn(indR, l)
-        rcombs <- matrix(nrow= l,ncol=nrrandomcombs)
-        for(i in 1:nrrandomcombs){
-          #sample(y, size=2*n, replace=FALSE)
-          rcombs[,i]<- sample(indR,size=l, replace=FALSE)
-        }
-
-        #nrcombs <- choose(nrej[1], l)
-
-        nrejs <- numeric(w)
-        boundfound <- TRUE
-        i<-1
-        while(boundfound==TRUE & i <= nrrandomcombs){
-
-
-
-          if(reject== "small"){
-            nrejs <- apply( PM[,c(indRc, rcombs[,i])], 1, function(x) {sum(x<cutoff)} )
-          }
-          if(reject== "large"){
-            nrejs <- apply( PM[,c(indRc, rcombs[,i])], 1, function(x) {sum(x>cutoff)} )
-          }
-          if(reject== "absolute"){
-            nrejs <- apply( PM[,c(indRc, rcombs[,i])], 1, function(x) {sum(abs(x)>cutoff)} )
+      for (l in which(1:nrej[1] %% ncores == 0)) {
+        if (file.exists("checker.txt")) {
+          return(NULL)
+        } else {
+          #combs <- combn(indR, l)
+          rcombs <- matrix(nrow= l,ncol=nrrandomcombs)
+          for(i in 1:nrrandomcombs){
+            #sample(y, size=2*n, replace=FALSE)
+            rcombs[,i]<- sample(indR,size=l, replace=FALSE)
           }
 
+          #nrcombs <- choose(nrej[1], l)
 
-          if(l <= sort(nrejs)[k]) {
-            boundfound <- FALSE   #the bound is not l
-            appctbound <- l
-            if (l == nrej[1]) {
+          nrejs <- numeric(w)
+          boundfound <- TRUE
+          i<-1
+          while(boundfound==TRUE & i <= nrrandomcombs){
+
+
+
+            if(reject== "small"){
+              nrejs <- apply( PM[,c(indRc, rcombs[,i])], 1, function(x) {sum(x<cutoff)} )
+            }
+            if(reject== "large"){
+              nrejs <- apply( PM[,c(indRc, rcombs[,i])], 1, function(x) {sum(x>cutoff)} )
+            }
+            if(reject== "absolute"){
+              nrejs <- apply( PM[,c(indRc, rcombs[,i])], 1, function(x) {sum(abs(x)>cutoff)} )
+            }
+
+
+            if(l <= sort(nrejs)[k]) {
+              boundfound <- FALSE   #the bound is not l
+              appctbound <- l
+              if (l == nrej[1]) {
+                write(l, "checker.txt")
+              }
+            } else {
               write(l, "checker.txt")
             }
-          } else {
-            write(l, "checker.txt")
+            i <- i+1
           }
-          i <- i+1
+          return(l)
         }
-        return(l)
       }
     } #loop l
     appctbound = unlist(read.delim("checker.txt", header = FALSE))
