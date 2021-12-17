@@ -43,8 +43,8 @@ confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small"
 
 
 
-  simple <- min( sort(nrej)[k] , nrej[1] )
-  est <- min( sort(nrej)[0.5*w] , nrej[1] )
+  simple <- min( sort(nrej, partial = k)[k] , nrej[1] )
+  est <- min( median(nrej) , nrej[1] )
 
 
 
@@ -69,34 +69,8 @@ confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small"
     }
 
 
-
-    indR <- numeric(1)
-    for(i in 1:m){
-      if(Rset[i]==TRUE){
-        if(max(indR)==0){
-          indR[1] <- i
-        }
-        else{
-          indR <- c(indR,i)
-        }
-
-      }
-    }
-
-
-    #make vector indRc with indices corresponding to complement of rejected set:
-    indRc <- numeric(1)
-    for(i in 1:m){
-      if(Rset[i]==FALSE){
-        if(indRc[1]==0){
-          indRc[1] <- i
-        }
-        else{
-          indRc <- c(indRc,i)
-        }
-
-      }
-    }
+    indR = which(Rset)
+    indRc = which(!Rset)
   }
 
 
@@ -115,15 +89,22 @@ confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small"
     ctbound <- 0
     boundfound <- FALSE
 
+    if (file.exists("upper_bounds.txt")) {
+      file.remove("upper_bounds.txt")
+    }
+
     zap <- foreach(
       j = 1:ncores,
       .combine= 'c'
     ) %dopar% {
-      for (l in which(1:nrej[1] %% ncores == 0)) {
+      #for (l in which(1:nrej[1] %% ncores == 0)) {
+      for (l in 1:nrej[1]) {
         # Check if a bound has been found
-        if (file.exists("lowest_bound.txt")) {
-          content = unlist(read.delim("lowest_bound.txt", header = FALSE))
-          if (content < l) {
+        if (file.exists("upper_bounds.txt")) {
+          content = unlist(read.delim("upper_bounds.txt", header = FALSE))
+          # if l is lower than the lowest bound, then the current l may still
+          # yield a lower bound
+          if (l > min(content)) {
             return(NULL)
           }
         }
@@ -149,22 +130,22 @@ confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small"
             nrejs <- apply( PM[,c(indRc, combs[,i])], 1, function(x) {sum(abs(x)>cutoff)} )
           }
 
-          if(l <= sort(nrejs, partial = k)[k]) {
+          if (l <= sort(nrejs, partial = k)[k]) {
             boundfound <- FALSE   #the bound is not l
             ctbound <- l
             if (l == nrej[1]) {
-              write(l, "lowest_bound.txt")
+              write(l, "upper_bounds.txt", append = TRUE)
             }
           } else {
-            write(l, "lowest_bound.txt")
+            write(l, "upper_bounds.txt", append = TRUE)
           }
           i <- i+1
         }
       }
       return(l)
     } #loop l
-    ctbound = unlist(read.delim("lowest_bound.txt", header = FALSE))
-    file.remove("lowest_bound.txt")
+    ctbound = min(unlist(read.delim("upper_bounds.txt", header = FALSE)))
+    file.remove("upper_bounds.txt")
 
     out <- c(nrej[1],est,min(ctbound, simple))
     names(out) <- c("#rejections:", "Simple estimate of #fp:",
@@ -187,27 +168,31 @@ confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small"
 
     nrrandomcombs <- ncombs # number of random combinations checked
 
+    if (file.exists("upper_bounds.txt")) {
+      file.remove("upper_bounds.txt")
+    }
+
     zap <- foreach(
       j = 1:ncores,
       .combine= 'c'
     ) %dopar% {
-      #for (l in which(1:nrej[1] %% ncores == 0)) {
-      for (l in 1:nrej[1]) {
+
+      # spread values of l evenly over the cores
+      for (l in which(1:nrej[1] %% ncores == 0)) {
+
         # Check if a bound has been found
-        if (file.exists("lowest_bound.txt")) {
-          content = unlist(read.delim("lowest_bound.txt", header = FALSE))
+        if (file.exists("upper_bounds.txt")) {
+          content = unlist(read.delim("upper_bounds.txt", header = FALSE))
+
           # if l is lower than the lowest bound, then the current l may still
           # yield a lower bound
-          if (l < content) {
+          if (l > min(content)) {
             return(NULL)
           }
         }
+
         #combs <- combn(indR, l)
-        rcombs <- matrix(nrow= l,ncol=nrrandomcombs)
-        for(i in 1:nrrandomcombs){
-          #sample(y, size=2*n, replace=FALSE)
-          rcombs[,i]<- sample(indR,size=l, replace=FALSE)
-        }
+        rcombs = replicate(nrrandomcombs, sample(indR, size=l, replace=FALSE))
 
         #nrcombs <- choose(nrej[1], l)
 
@@ -230,18 +215,18 @@ confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small"
             boundfound <- FALSE   #the bound is not l
             appctbound <- l
             if (l == nrej[1]) {
-              write(l, "lowest_bound.txt")
+              write(l, "upper_bounds.txt", append = TRUE)
             }
           } else {
-            write(l, "lowest_bound.txt")
+            write(l, "upper_bounds.txt", append = TRUE)
           }
           i <- i+1
         }
       }
       return(l)
     } #loop l
-    appctbound = unlist(read.delim("lowest_bound.txt", header = FALSE))
-    file.remove("lowest_bound.txt")
+    appctbound = min(unlist(read.delim("upper_bounds.txt", header = FALSE)))
+    file.remove("upper_bounds.txt")
 
     out <- c(nrej[1],est,min(appctbound, simple))
     names(out) <- c("#rejections:", "Simple estimate of #fp:",
