@@ -1,23 +1,27 @@
-confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small", alpha=0.05,
-                    method="simple",  ncombs=1000, ncores = 1){
+confSAMparallel <- function(p, PM, includes.id=TRUE,
+                            cutoff=0.01, reject="small", alpha=0.05,
+                            method="simple",  ncombs=1000, ncores = 1) {
+
   if (ncol(PM)!=length(p) & nrow(PM)!=length(p)){
     stop("invalid permutation matrix")
   }
+
   if (ncol(PM)!=length(p) & nrow(PM)==length(p)){
     PM<-t(PM)
   }
+
   w <- nrow(PM)    #each row corresponds to a perm
   m <- ncol(PM)
 
-  if((includes.id==TRUE) & (min(PM[1,]==p)!=TRUE)){
+  if(includes.id & !(min(PM[1,]==p))) {
     stop("first row/column of matrix provided does not equal vector p provided.")
   }
 
-  if( length(cutoff)!=1 & length(cutoff)!=length(p) ){
+  if( length(cutoff)!=1 & length(cutoff)!=length(p) ) {
     stop("length of cutoff should be 1 or length(p)")
   }
 
-  if(includes.id == FALSE){
+  if(!includes.id){
     PMid <- matrix(nrow=w+1,ncol=m)
     PMid[2:(w+1),] <- PM
     PMid[1,] <- p
@@ -97,8 +101,7 @@ confSAMparallel <- function(p, PM, includes.id=TRUE, cutoff=0.01, reject="small"
       j = 1:ncores,
       .combine= 'c'
     ) %dopar% {
-      #for (l in which(1:nrej[1] %% ncores == 0)) {
-      for (l in 1:nrej[1]) {
+      for (l in which(1:nrej[1] %% ncores == 0)) {
         # Check if a bound has been found
         if (file.exists("upper_bounds.txt")) {
           content = unlist(read.delim("upper_bounds.txt", header = FALSE))
