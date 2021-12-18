@@ -48,7 +48,7 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
 
 
   simple <- min( sort(nrej, partial = k)[k] , nrej[1] )
-  est <- round(min( median(nrej) , nrej[1] ), 0)
+  est <- min( sort(nrej, partial = floor(0.5*w))[floor(0.5*w)] , nrej[1] )
 
 
 
