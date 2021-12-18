@@ -217,7 +217,7 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
       return(l)
     } #loop l
 
-    appctbound = unlist(read.delim("upper_bounds.txt", header = FALSE))
+    appctbound = max(unlist(read.delim("upper_bounds.txt", header = FALSE)))
     file.remove("upper_bounds.txt")
 
     if (file.exists("stop.txt")) {
