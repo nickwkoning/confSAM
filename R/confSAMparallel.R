@@ -89,75 +89,6 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
   }
 
 
-
-  if(method=="full"){
-    if(nrej[1]>50 | simple>8) { message("The full closed testing procedure
-    might be computationally infeasible.") }
-
-
-
-
-
-    ctbound <- 0
-    boundfound <- FALSE
-
-    if (file.exists("upper_bounds.txt")) {
-      file.remove("upper_bounds.txt")
-    }
-
-
-    zap <- foreach(
-      j = 1:ncores,
-      .combine= 'c'
-    ) %dopar% {
-
-      # spread values of l evenly over the cores
-      for (l in which(1:nrej[1] %% ncores == 0)) {
-
-        # Check if a bound has been found
-        if (file.exists("upper_bounds.txt")) {
-          content = unlist(read.delim("upper_bounds.txt", header = FALSE))
-
-          # if l is smaller than the lowest upper bound found so far,
-          # then the current l may still yield a lower bound
-          if (l >= min(content)) {
-            return(NULL)
-          }
-        }
-
-        nrcombs <- choose(nrej[1], l)
-        if(nrcombs > 1e6){ message("The full closed testing procedure
-        might be computationally infeasible.")}
-        combs <- combn(indR, l)
-
-        ###
-
-        for (i in 1:nrcombs) {
-          nrejs <- apply( PM[,c(indRc, combs[,i])], 1, reject_fun )
-
-          if (sum(l > nrejs) < k) {
-            appctbound = l
-            break
-          }
-        }
-
-        if (i == nrrandomcombs | l == nrej[1]) {
-          write(l, "upper_bounds.txt", append = TRUE)
-        }
-      }
-      return(l)
-    } #loop l
-    ctbound = min(unlist(read.delim("upper_bounds.txt", header = FALSE)))
-    file.remove("upper_bounds.txt")
-
-    out <- c(nrej[1],est,min(ctbound, simple))
-    names(out) <- c("#rejections:", "Simple estimate of #fp:",
-                    "cl.testing-based bound for #fp:")
-    return(out)
-
-  }
-
-
   if(method=="approx"){
     if(ncombs > 1e6){ message("The procedure might be computationally
     infeasible since ncombs is very large.")}
@@ -180,44 +111,45 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
       # spread values of l evenly over the cores
       for (l in which(1:nrej[1] %% ncores == j)) {
 
-        # Check if a bound has been found
+        # Check if lowest upper bound has been exceeded
         if (file.exists("stop.txt")) {
-          content = max(unlist(read.delim("upper_bounds.txt", header = FALSE)))
+          stopping_l = unlist(read.delim("stop.txt", header = FALSE))
 
           # If l is smaller than the lowest upper bound found so far,
-          # then the current l may still yield a lower bound
-          if (l >= content) {
+          # then the current l may still yield a lower upper bound
+          if (l >= stopping_l) {
             return(NULL)
           }
         }
 
-        # Generate the random combs
+        # Generate the random combs from rejection set
         rcombs = replicate(ncombs, sample(indR, size=l, replace=FALSE))
         if (is.null(dim(rcombs))) {
           rcombs = matrix(rcombs, nrow = 1)
         }
 
         for (i in 1:ncombs) {
-          nrejs = apply( PM[,c(indRc, rcombs[,i])], 1, reject_fun)
+          nrejs = apply( PM[, c(indRc, rcombs[,i])], 1, reject_fun)
 
           if (sum(l > nrejs) < k) {
-            content = max(unlist(read.delim("upper_bounds.txt", header = FALSE)))
+            content = unlist(read.delim("upper_bounds.txt", header = FALSE))
 
             if (l >= max(content)) {
-              write(l, "upper_bounds.txt", append = TRUE)
+              write(l, "upper_bounds.txt")
               break
             }
           }
         }
 
+        # lowest upper bound has been exceeded
         if (i == ncombs) {
-            write("", "stop.txt")
+            write(l, "stop.txt")
         }
       }
       return(l)
     } #loop l
 
-    appctbound = max(unlist(read.delim("upper_bounds.txt", header = FALSE)))
+    appctbound = unlist(read.delim("upper_bounds.txt", header = FALSE))
     file.remove("upper_bounds.txt")
 
     if (file.exists("stop.txt")) {
