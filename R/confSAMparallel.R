@@ -178,7 +178,7 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
     ) %dopar% {
 
       # spread values of l evenly over the cores
-      for (l in which(1:nrej[1] %% ncores == 0)) {
+      for (l in which(1:nrej[1] %% ncores == j)) {
 
         # Check if a bound has been found
         if (file.exists("stop.txt")) {
