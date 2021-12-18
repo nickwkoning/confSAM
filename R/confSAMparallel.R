@@ -182,7 +182,7 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
 
         # Check if a bound has been found
         if (file.exists("stop.txt")) {
-          content = unlist(read.delim("upper_bounds.txt", header = FALSE))[1]
+          content = max(unlist(read.delim("upper_bounds.txt", header = FALSE)))
 
           # If l is smaller than the lowest upper bound found so far,
           # then the current l may still yield a lower bound
@@ -201,12 +201,12 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
           nrejs = apply( PM[,c(indRc, rcombs[,i])], 1, reject_fun)
 
           if (sum(l > nrejs) < k) {
-            content = unlist(read.delim("upper_bounds.txt", header = FALSE))[1]
+            content = max(unlist(read.delim("upper_bounds.txt", header = FALSE)))
 
             if (l >= max(content)) {
               write(l, "upper_bounds.txt", append = TRUE)
+              break
             }
-            break
           }
         }
 
