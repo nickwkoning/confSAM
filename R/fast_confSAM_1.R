@@ -1,18 +1,51 @@
+fast_confSAM_1 = function(p, PM, includes.id = TRUE,
+                           cutoff = 0.01, reject = "small", alpha = 0.05,
+                           method="simple",  ncombs=1000, verbose_from = 1) {
+
+  if (ncol(PM) != length(p)){
+    stop("invalid permutation matrix")
+  }
+
+  if (includes.id & !(min(PM[1,] == p))) {
+    stop("first row of matrix provided does not equal vector p provided.")
+  }
+
+  if (length(cutoff) != 1 & length(cutoff) != length(p)) {
+    stop("length of cutoff should be 1 or length(p)")
+  }
+
+  # if identity permutation (p) not included in PM: add it to PM
+  if(!includes.id){
+    PMid <- matrix(nrow=w+1,ncol=m)
+    PMid[2:(w+1),] <- PM
+    PMid[1,] <- p
+    PM <- PMid
+    w <- nrow(PM)  # i.e. w <- w+1
+  }
+
   # Dimensions of PM
   w = nrow(PM)    # each row corresponds to a permutation
   m = ncol(PM)    # each column corresponds to a test
 
   # rejection function
-  reject_func = function(x) abs(x) > cutoff
+  if(reject== "small"){
+    reject_fun = function(x) x < cutoff
+  }
+
+  if(reject== "large"){
+    reject_fun = function(x) x > cutoff
+  }
+
+  if(reject== "absolute"){
+    reject_fun = function(x) abs(x) > cutoff
+  }
+
   reject_num  = function(x) sum(reject_func(x))
 
-  # Which of the identity permutation exceed the cutoff?
+  # Which of the identity permutations exceed the cutoff?
   Rset = reject_func(p)
 
   # Partition tests based on whether identity permutation rejects
-  indR = which(Rset)
-  indRc = which(!Rset)
-
   # number of rejections for each permutation in both partitions
   nrej_R = apply(PM[, Rset], 1, reject_num)
   nrej_Rc  = apply(PM[, !Rset],  1, reject_num)
@@ -25,58 +58,71 @@
   k = ceiling((1 - alpha) * w)
 
 
-  ## Simple
-  simple <- min( sort(nrej, partial = k)[k] , nrej[1] )
-  est <- min( sort(nrej, partial = floor(0.5*w))[floor(0.5*w)] , nrej[1] )
 
-  tic()
+  ## Simple
+  simple <- min(sort(nrej, partial = k)[k], nrej[1])
+  est <- min(sort(nrej, partial = floor(w / 2))[floor(w / 2)], nrej[1])
+
+  if (method == "simple") {
+    out = c(nrej[1], est, simple)
+    names(out) = c("#rejections:", "Simple estimate of #fp:",
+                    "Simple conf. bound for #fp:")
+    return(out)
+  }
+
+
   ## Approx
 
-  # Initializing upper bound
-  upper_bound = 0
-  last_i = 1
+  if (method == "approx") {
+    # Initializing upper bound
+    bound = nrej[1]
+    last_i = 1
 
-  # Generate the random combs from rejection set
-  rcombs = gen_rcombs(ncombs, indR, nrej[1])
+    # Generate the random combs from rejection set
+    indR = which(Rset)
+    rcombs = replicate(ncombs, sample(indR, size = nrej[1], replace = FALSE))
+    if (is.null(dim(rcombs))) {
+      rcombs = matrix(rcombs, nrow = 1)
+    }
 
+    # Find the smallest value of l so that for all larger values of l,
+    # no comb leads to a rejection
+    for (l in 1:nrej[1]) {
+      any_reject = FALSE
+      for (i in last_i:ncombs) { # can start at last_i due to explanation below
+        elements = rcombs[1:l, i]
+        PM_temp = PM[, elements, drop = F]
 
-  # Find the smallest value of l so that for all larger values of l,
-  # no comb leads to a rejection
-  for (l in 1:nrej[1]) {
-    any_reject = FALSE
-    for (i in last_i:ncombs) { # can start at last_i due to explanation below
-      elements = rcombs[1:l, i]
-      PM_temp = PM[, elements, drop = F]
+        nrejs_rcombs = apply(PM_temp, 1, reject_num)
+        nrejs = nrej_Rc + nrejs_rcombs
 
-      nrejs_rcombs = apply(PM_temp, 1, reject_num)
-      nrejs = nrej_Rc + nrejs_rcombs
+        # Reject?
+          # NOTE: for fixed i, the below sum weakly increases in l
+          # explanation: l increases by 1 and each element of nrejs by at most 1
+          # if they all increase by 1, the sum remains unchanged
+          # if some do not increase by 1, the sum may increase or remain unchanged
+        if (sum(l > nrejs) < k) {
+          any_reject = TRUE
+          break
+        }
+      }
 
-      # Reject?
-        # NOTE: for fixed i, the below sum weakly increases in l
-        # explanation: l increases by 1 and each element of nrejs by at most 1
-        # if they all increase by 1, the sum remains unchanged
-        # if some do not increase by 1, the sum may increase or remain unchanged
-      if (sum(l > nrejs) < k) {
-        any_reject = TRUE
+      last_i = i
+
+      if (i > verbose_from * ncombs) {
+        progress = paste0("l: ", l, ". i: ", i)
+        print(progress)
+      }
+
+      if (!any_reject) {
+        bound = l - 1
         break
       }
     }
 
-    last_i = i
-
-    if (i > 10) {
-      print(c(l, i, sum(l > nrej_Rc)))
-    }
-
-    if (!any_reject) {
-      upper_bound = l - 1
-      break
-    }
+    out <- c(nrej[1], est, min(bound, simple), ncombs)
+    names(out) <- c("#rejections:", "Simple estimate of #fp:",
+                  "Appr. cl.testing-based bound for #fp:", "ncombs")
+    return(out)
   }
-
-  appctbound = upper_bound
-
-  out <- c(nrej[1],est,min(appctbound, simple), cutoff, ncombs)
-  names(out) <- c("#rejections:", "Simple estimate of #fp:",
-                "Appr. cl.testing-based bound for #fp:", "cutoff", "ncombs")
-  out
+}
