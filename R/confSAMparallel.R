@@ -108,12 +108,12 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
       # spread values of l evenly over the cores
       for (l in which(1:nrej[1] %% ncores == j)) {
 
-        # Check if lowest upper bound has been exceeded
+        # Check if smallest upper bound has been exceeded
         if (file.exists("stop.txt")) {
           stopping_l = unlist(read.delim("stop.txt", header = FALSE))
 
-          # If l is smaller than the lowest upper bound found so far,
-          # then the current l may still yield a lower upper bound
+          # If l is smaller than the smallest upper bound found so far,
+          # then the current l may still yield a smaller upper bound
           if (l >= stopping_l) {
             return(NULL)
           }
