@@ -2,49 +2,54 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
                             cutoff=0.01, reject="small", alpha=0.05,
                             method="simple",  ncombs=1000, ncores = 1) {
 
-  if (ncol(PM)!=length(p) & nrow(PM)!=length(p)){
+  if (ncol(PM) != length(p)){
     stop("invalid permutation matrix")
   }
 
-  if (ncol(PM)!=length(p) & nrow(PM)==length(p)){
-    PM<-t(PM)
-  }
+  # This is dangerous: if an erroneous matrix PM is entered,
+  # no warning may be given
+  # if (ncol(PM)!=length(p) & nrow(PM)==length(p)){
+  #   PM <- t(PM)
+  # }
 
-  w <- nrow(PM)    #each row corresponds to a perm
+  w <- nrow(PM)    # each row corresponds to a perm
   m <- ncol(PM)
 
-  if(includes.id & !(min(PM[1,]==p))) {
+  if (includes.id & !(min(PM[1,] == p))) {
     stop("first row/column of matrix provided does not equal vector p provided.")
   }
 
-  if( length(cutoff)!=1 & length(cutoff)!=length(p) ) {
+  if (length(cutoff) != 1 & length(cutoff) != length(p)) {
     stop("length of cutoff should be 1 or length(p)")
   }
 
+  # if identity permutation (p) not included in PM: add it to PM
   if(!includes.id){
     PMid <- matrix(nrow=w+1,ncol=m)
     PMid[2:(w+1),] <- PM
     PMid[1,] <- p
     PM <- PMid
-    w<-nrow(PM)  # i.e. w <- w+1
+    w <- nrow(PM)  # i.e. w <- w+1
   }
 
 
 
 
-  k <- ceiling((1-alpha)*w)
+  k <- ceiling((1 - alpha) * w)
 
   if(reject== "small"){
-    nrej <- apply( PM, 1, function(x) {sum(x<cutoff)} )
+    reject_fun = function(x) sum(x<cutoff)
   }
+
   if(reject== "large"){
-    nrej <- apply( PM, 1, function(x) {sum(x>cutoff)} )
+    reject_fun = function(x) sum(x>cutoff)
   }
+
   if(reject== "absolute"){
-    nrej <- apply( PM, 1, function(x) {sum(x>cutoff)+sum(-x>cutoff) } )
+    reject_fun = function(x) sum(abs(x)>cutoff)
   }
 
-
+  nrej = apply(PM, 1, reject_fun)
 
 
   simple <- min( sort(nrej, partial = k)[k] , nrej[1] )
@@ -61,7 +66,7 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
 
 
   if(method=="full" | method=="approx"| method=="csc"){
-    #make vector indR with indices corresponding to rejected set:
+    # make vector indR with indices corresponding to rejected set:
     if(reject== "small"){
       Rset <- (p < cutoff)
     }
@@ -78,15 +83,7 @@ confSAMparallel <- function(p, PM, includes.id=TRUE,
   }
 
 
-  if(reject== "small"){
-    reject_fun = function(x) sum(x<cutoff)
-  }
-  if(reject== "large"){
-    reject_fun = function(x) sum(x>cutoff)
-  }
-  if(reject== "absolute"){
-    reject_fun = function(x) sum(abs(x)>cutoff)
-  }
+
 
 
   if(method=="approx"){
