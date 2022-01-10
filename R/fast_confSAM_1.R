@@ -29,15 +29,15 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
 
   # rejection function
   if(reject== "small"){
-    reject_fun = function(x) x < cutoff
+    reject_func = function(x) x < cutoff
   }
 
   if(reject== "large"){
-    reject_fun = function(x) x > cutoff
+    reject_func = function(x) x > cutoff
   }
 
   if(reject== "absolute"){
-    reject_fun = function(x) abs(x) > cutoff
+    reject_func = function(x) abs(x) > cutoff
   }
 
   reject_num  = function(x) sum(reject_func(x))
