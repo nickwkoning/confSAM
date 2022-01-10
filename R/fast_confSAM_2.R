@@ -79,9 +79,16 @@ fast_confSAM_2 = function(p, PM, includes.id = TRUE,
 
     indR = which(Rset)
 
+    # initialize l as follows
+      # explanation: sum(l > nrejs) <= sum(l > nrej_Rc), for all l, as
+      # nrejs = nrej_Rc + nrejs_rcombs >= nrej_Rc (element-wise)
+      # so, sum(l > nrej_Rc) < k implies sum(l > nrejs) < k
+      # hence, we only need to check l >= start_l
+    start_l = sort(nrej_Rc, partial = k)[k]
+
     # Find the smallest value of l so that for all larger values of l,
     # no comb leads to a rejection
-    for (l in 1:nrej[1]) {
+    for (l in start_l:nrej[1]) {
 
       any_reject = FALSE
       for (i in 1:ncombs) {
@@ -89,6 +96,8 @@ fast_confSAM_2 = function(p, PM, includes.id = TRUE,
         PM_temp = PM[, rcomb, drop = F]
 
         nrejs_rcombs = apply(PM_temp, 1, reject_num)
+
+        # use the precomputation of nrej_Rc
         nrejs = nrej_Rc + nrejs_rcombs
 
         # Reject?

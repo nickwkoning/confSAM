@@ -74,6 +74,14 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
   ## Approx
 
   if (method == "approx") {
+
+    # initialize l as follows
+      # explanation: sum(l > nrejs) <= sum(l > nrej_Rc), for all l, as
+      # nrejs = nrej_Rc + nrejs_rcombs >= nrej_Rc (element-wise)
+      # so, sum(l > nrej_Rc) < k implies sum(l > nrejs) < k
+      # hence, we only need to check l >= start_l
+    start_l = sort(nrej_Rc, partial = k)[k]
+
     # Initializing upper bound
     bound = nrej[1]
     last_i = 1
@@ -87,13 +95,15 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
 
     # Find the smallest value of l so that for all larger values of l,
     # no comb leads to a rejection
-    for (l in 1:nrej[1]) {
+    for (l in start_l:nrej[1]) {
       any_reject = FALSE
       for (i in last_i:ncombs) { # can start at last_i due to explanation below
         elements = rcombs[1:l, i]
         PM_temp = PM[, elements, drop = F]
 
         nrejs_rcombs = apply(PM_temp, 1, reject_num)
+
+        # use the precomputation of nrej_Rc
         nrejs = nrej_Rc + nrejs_rcombs
 
         # Reject?
@@ -101,6 +111,7 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
           # explanation: l increases by 1 and each element of nrejs by at most 1
           # if they all increase by 1, the sum remains unchanged
           # if some do not increase by 1, the sum may increase or remain unchanged
+          # so if we increase l, we don't have to re-check i's we already checked
         if (sum(l > nrejs) < k) {
           any_reject = TRUE
           break
