@@ -53,6 +53,10 @@ fast_confSAM_2 = function(p, PM, includes.id = TRUE,
   # total number of rejections for each permutation
   nrej = nrej_R + nrej_Rc
 
+  if (nrej[1] == 0) {
+    stop("Error: No rejections.")
+  }
+
 
   # Critical value
   k = ceiling((1 - alpha) * w)
@@ -85,6 +89,13 @@ fast_confSAM_2 = function(p, PM, includes.id = TRUE,
       # so, sum(l > nrej_Rc) < k implies sum(l > nrejs) < k
       # hence, we only need to check l >= start_l
     start_l = sort(nrej_Rc, partial = k)[k]
+
+    if (start_l >= nrej[1]) {
+      out <- c(nrej[1], est, min(bound, simple), ncombs)
+      names(out) <- c("#rejections:", "Simple estimate of #fp:",
+                      "Appr. cl.testing-based bound for #fp:", "ncombs")
+      return(out)
+    }
 
     # Find the smallest value of l so that for all larger values of l,
     # no comb leads to a rejection
