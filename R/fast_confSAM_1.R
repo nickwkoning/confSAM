@@ -97,6 +97,7 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
     for (l in start_l:nrej[1]) {
       any_reject = FALSE
 
+      # Is any of the rcombs rejected?
       for (i in last_i:ncombs) { # can start at last_i due to explanation below
         elements = rcombs[1:l, i]
         PM_temp = PM[, elements, drop = F]
@@ -106,7 +107,7 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
         # use the precomputation of nrej_Rc
         nrejs = nrej_Rc + nrejs_rcombs
 
-        # Reject?
+        # Reject this rcomb?
         if (sum(l > nrejs) < k) {
           any_reject = TRUE
           break
@@ -120,6 +121,7 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
       # so, if l increases, we don't have to re-check i's we already checked
       last_i = i
 
+      # Report progress
       if (i > verbose_from * ncombs) {
         progress = paste0("l: ", l, ". i: ", i)
         print(progress)
