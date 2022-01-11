@@ -53,6 +53,9 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
   # total number of rejections for each permutation
   nrej = nrej_R + nrej_Rc
 
+  if (nrej[1] == 0) {
+    stop("Error: No rejections.")
+  }
 
   # Critical value
   k = ceiling((1 - alpha) * w)
@@ -74,6 +77,10 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
 
   if (method == "approx") {
 
+    # Initializing upper bound
+    bound = nrej[1]
+    last_i = 1
+
     # initialize l as follows
       # explanation: sum(l > nrejs) <= sum(l > nrej_Rc), for all l, as
       # nrejs = nrej_Rc + nrejs_rcombs >= nrej_Rc (element-wise)
@@ -81,9 +88,12 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
       # hence, we only need to check l >= start_l
     start_l = sort(nrej_Rc, partial = k)[k]
 
-    # Initializing upper bound
-    bound = nrej[1]
-    last_i = 1
+    if (start_l >= nrej[1]) {
+      out <- c(nrej[1], est, min(bound, simple), ncombs)
+      names(out) <- c("#rejections:", "Simple estimate of #fp:",
+                      "Appr. cl.testing-based bound for #fp:", "ncombs")
+      return(out)
+    }
 
     # Generate the random combs from rejection set
     indR = which(Rset)
