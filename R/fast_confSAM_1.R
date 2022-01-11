@@ -15,12 +15,12 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
   }
 
   # if identity permutation (p) not included in PM: add it to PM
-  if(!includes.id){
-    PMid <- matrix(nrow=w+1,ncol=m)
-    PMid[2:(w+1),] <- PM
-    PMid[1,] <- p
-    PM <- PMid
-    w <- nrow(PM)  # i.e. w <- w+1
+  if (!includes.id) {
+    PMid = matrix(nrow = w + 1, ncol = m)
+    PMid[2:(w + 1),] = PM
+    PMid[1,] = p
+    PM = PMid
+    w = nrow(PM)  # i.e. w <- w+1
   }
 
   # Dimensions of PM
@@ -28,15 +28,15 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
   m = ncol(PM)    # each column corresponds to a test
 
   # rejection function
-  if(reject== "small"){
+  if (reject== "small") {
     reject_func = function(x) x < cutoff
   }
 
-  if(reject== "large"){
+  if (reject== "large"){
     reject_func = function(x) x > cutoff
   }
 
-  if(reject== "absolute"){
+  if (reject== "absolute"){
     reject_func = function(x) abs(x) > cutoff
   }
 
@@ -45,7 +45,7 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
   # Which of the identity permutations exceed the cutoff?
   Rset = reject_func(p)
 
-  # Partition tests based on whether identity permutation rejects
+  # Partition tests based on whether identity permutation rejects:
   # number of rejections for each permutation in both partitions
   nrej_R = apply(PM[, Rset], 1, reject_num)
   nrej_Rc  = apply(PM[, !Rset],  1, reject_num)
@@ -58,10 +58,9 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
   k = ceiling((1 - alpha) * w)
 
 
-
   ## Simple
-  simple <- min(sort(nrej, partial = k)[k], nrej[1])
-  est <- min(sort(nrej, partial = floor(w / 2))[floor(w / 2)], nrej[1])
+  simple = min(sort(nrej, partial = k)[k], nrej[1])
+  est = min(sort(nrej, partial = floor(w / 2))[floor(w / 2)], nrej[1])
 
   if (method == "simple") {
     out = c(nrej[1], est, simple)
@@ -97,6 +96,7 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
     # no comb leads to a rejection
     for (l in start_l:nrej[1]) {
       any_reject = FALSE
+
       for (i in last_i:ncombs) { # can start at last_i due to explanation below
         elements = rcombs[1:l, i]
         PM_temp = PM[, elements, drop = F]
@@ -107,17 +107,17 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
         nrejs = nrej_Rc + nrejs_rcombs
 
         # Reject?
-          # NOTE: for fixed i, the below sum weakly increases in l
-          # explanation: l increases by 1 and each element of nrejs by at most 1
-          # if they all increase by 1, the sum remains unchanged
-          # if some do not increase by 1, the sum may increase or remain unchanged
-          # so if we increase l, we don't have to re-check i's we already checked
         if (sum(l > nrejs) < k) {
           any_reject = TRUE
           break
         }
       }
 
+      # NOTE: for fixed i, sum(l > nrejs) weakly increases in l
+      # explanation: l increases by 1 and each element of nrejs by at most 1
+      # if they all increase by 1, sum(l > nrejs) remains unchanged
+      # if some do not increase by 1, sum(l > nrejs) may increase or not change
+      # so, if l increases, we don't have to re-check i's we already checked
       last_i = i
 
       if (i > verbose_from * ncombs) {
