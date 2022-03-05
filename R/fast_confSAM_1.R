@@ -16,11 +16,7 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
 
   # if identity permutation (p) not included in PM: add it to PM
   if (!includes.id) {
-    PMid = matrix(nrow = w + 1, ncol = m)
-    PMid[2:(w + 1),] = PM
-    PMid[1,] = p
-    PM = PMid
-    w = nrow(PM)  # i.e. w <- w+1
+    PM = cbind(p, PM)
   }
 
   # Dimensions of PM
