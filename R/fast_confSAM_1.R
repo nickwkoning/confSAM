@@ -24,15 +24,15 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
   m = ncol(PM)    # each column corresponds to a test
 
   # rejection function
-  if (reject== "small") {
+  if (reject == "small") {
     reject_func = function(x) x < cutoff
   }
 
-  if (reject== "large"){
+  if (reject == "large"){
     reject_func = function(x) x > cutoff
   }
 
-  if (reject== "absolute"){
+  if (reject == "absolute"){
     reject_func = function(x) abs(x) > cutoff
   }
 
@@ -43,7 +43,7 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
 
   # Partition tests based on whether identity permutation rejects:
   # number of rejections for each permutation in both partitions
-  nrej_R = apply(PM[, Rset], 1, reject_num)
+  nrej_R   = apply(PM[, Rset], 1, reject_num)
   nrej_Rc  = apply(PM[, !Rset],  1, reject_num)
 
   # total number of rejections for each permutation
@@ -63,8 +63,9 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
 
   if (method == "simple") {
     out = c(nrej[1], est, simple)
-    names(out) = c("#rejections:", "Simple estimate of #fp:",
-                    "Simple conf. bound for #fp:")
+    names(out) = c("#rejections:",
+                   "Simple estimate of #fp:",
+                   "Simple conf. bound for #fp:")
     return(out)
   }
 
@@ -110,7 +111,7 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
 
         nrejs_rcombs = apply(PM_temp, 1, reject_num)
 
-        # use the precomputation of nrej_Rc
+        # use the pre-computation of nrej_Rc
         nrejs = nrej_Rc + nrejs_rcombs
 
         # Reject this rcomb?
@@ -140,8 +141,10 @@ fast_confSAM_1 = function(p, PM, includes.id = TRUE,
     }
 
     out <- c(nrej[1], est, min(bound, simple), ncombs)
-    names(out) <- c("#rejections:", "Simple estimate of #fp:",
-                  "Appr. cl.testing-based bound for #fp:", "ncombs")
+    names(out) <- c("#rejections:",
+                    "Simple estimate of #fp:",
+                    "Appr. cl.testing-based bound for #fp:",
+                    "ncombs")
     return(out)
   }
 }
